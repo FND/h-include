@@ -136,9 +136,7 @@ var hinclude;
     }
   };
 
-  var proto = Object.create(window.HTMLElement.prototype);
-
-  proto.attachedCallback = function () {
+  var attachedCallback = function () {
 
     var mode = hinclude.get_meta("include_mode", "buffered");
     var callback;
@@ -151,15 +149,41 @@ var hinclude;
       setTimeout(hinclude.show_buffered_content, timeout);
     }
 
-    hinclude.include(this, this.getAttribute("src"), this.getAttribute("media"), callback);
+    hinclude.include(this, this.source(), this.getAttribute("media"), callback);
   };
 
-  proto.refresh = function () {
+  var refresh = function () {
     var callback = hinclude.set_content_buffered;
-    hinclude.include(this, this.getAttribute("src"), this.getAttribute("media"), callback);
+    hinclude.include(this, this.source(), this.getAttribute("media"), callback);
+  };
+
+  var proto;
+
+  // Register custom element: <h-include src=...>
+
+  var proto = Object.create(window.HTMLElement.prototype);
+  proto.attachedCallback = attachedCallback;
+  proto.refresh = refresh;
+  proto.source = function () {
+    return this.getAttribute("src");
   };
 
   document.registerElement('h-include', {
     prototype : proto
   });
+
+  // Register type extension: <a is="h-embed" href=...>
+
+  proto = Object.create(window.HTMLAnchorElement.prototype);
+  proto.attachedCallback = attachedCallback;
+  proto.refresh = refresh;
+  proto.source = function () {
+    return this.href;
+  };
+
+  document.registerElement('h-embed', {
+    prototype : proto,
+    extends: "a"
+  });
+
 }());
